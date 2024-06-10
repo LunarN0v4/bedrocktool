@@ -1,5 +1,4 @@
 import subprocess, re, sys, os, shutil, json, binascii, hashlib, gzip
-
 VER_RE = re.compile(r"v(\d\.\d+\.\d+)(?:-(\d+)-(\w))?")
 
 NAME = "bedrocktool"
@@ -8,8 +7,8 @@ GIT_TAG = subprocess.run(["git", "describe", "--exclude", "r*", "--tags", "--alw
 if GIT_TAG == "":
     GIT_TAG = "v0.0.0"
 VER_MATCH = VER_RE.match(GIT_TAG)
-VER = VER_MATCH.group(1)
-PATCH = VER_MATCH.group(2) or "0"
+VER = VER_MATCH.group(1) if VER_MATCH else "0.0.0"
+PATCH = VER_MATCH.group(2) if VER_MATCH else "0"
 TAG = f"{VER}-{PATCH}"
 
 print(f"VER: {VER}")
@@ -28,7 +27,7 @@ print(flush=True)
 LDFLAGS = f"-s -w -X github.com/bedrock-tool/bedrocktool/utils/updater.Version={TAG}"
 
 PLATFORMS = [
-    ("windows", ["amd64"], ".exe"),
+    #("windows", ["amd64"], ".exe"),
     ("linux", ["amd64"], ""),
     #("darwin", ["amd64", "arm64"], ""),
     #("android", ["arm64"], ".apk"),
@@ -38,7 +37,9 @@ PLATFORMS = [
 
 def clean():
     shutil.rmtree("./tmp", True)
-    shutil.rmtree("./builds", True)
+    for file in os.listdir("./builds"):
+        if file.startswith("bedrocktool"):
+            os.remove(os.path.join("./builds", file))
     shutil.rmtree("./updates", True)
     for file in os.listdir("./cmd/bedrocktool"):
         if file.endswith(".syso"):
@@ -190,6 +191,5 @@ def main():
     clean()
     make_dirs()
     build_all(platform_filter, arch_filter)
-
 
 main()
